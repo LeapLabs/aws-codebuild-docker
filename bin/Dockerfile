@@ -12,8 +12,8 @@ ENV DOCKER_BUCKET="download.docker.com" \
     DIND_COMMIT="3b5fac462d21ca164b3778647420016315289034" \
     GITVERSION_VERSION="4.0.0" \
     DEBIAN_FRONTEND="noninteractive" \
-    SRC_DIR="/usr/src"
-
+    SRC_DIR="/usr/src" \
+    CYPRESS_VERSION="3.6.1"
 
 # Install git, SSH, and other utilities
 RUN set -ex \
@@ -37,6 +37,8 @@ RUN set -ex \
     && apt-get install -y --no-install-recommends \
        wget wget python3 python3-pip python3-setuptools jq \
        sudo zip make unzip curl iptables \
+       # required for cypress
+       xvfb libgtk-3-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -76,17 +78,34 @@ VOLUME /var/lib/docker
 COPY ssh_config /root/.ssh/config
 COPY dockerd-entrypoint.sh /usr/local/bin/
 
-#****************      NODEJS     ****************************************************
- ENV N_SRC_DIR="$SRC_DIR/n"
+RUN sudo echo "looopco.loc.cz 127.0.0.1" >> /etc/hosts
 
- RUN git clone https://github.com/tj/n $N_SRC_DIR \
-     && cd $N_SRC_DIR && make install \
-     && n $NODE_VERSION && npm install --save-dev -g grunt && npm install --save-dev -g grunt-cli && npm install --save-dev -g webpack \
-     && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
-     && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
-     && apt-get update && apt-get install -y --no-install-recommends yarn \
-     && cd / && rm -rf $N_SRC_DIR;
+#****************      NODEJS     ****************************************************
+ENV N_SRC_DIR="$SRC_DIR/n"
+
+RUN git clone https://github.com/tj/n $N_SRC_DIR \
+    && cd $N_SRC_DIR && make install \
+    && n $NODE_VERSION && npm install --save-dev -g grunt && npm install --save-dev -g grunt-cli && npm install --save-dev -g webpack \
+    && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+    && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
+    && apt-get update && apt-get install -y --no-install-recommends yarn \
+    && cd / && rm -rf $N_SRC_DIR;
 #****************      END NODEJS     ****************************************************
+
+#****************      CYPRESS     ****************************************************
+# avoid too many progress messages
+# https://github.com/cypress-io/cypress/issues/1243
+ENV CI=1
+
+RUN echo "whoami: $(whoami)"
+RUN npm config -g set user $(whoami)
+RUN npm install -g "cypress@${CYPRESS_VERSION}"
+RUN cypress verify
+
+# Cypress cache and installed version
+RUN cypress cache path
+RUN cypress cache list
+#****************      END CYPRESS     ****************************************************
 
 #****************      POSTGRES     ****************************************************
 RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
