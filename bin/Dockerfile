@@ -1,19 +1,19 @@
 FROM ubuntu:18.04
 
 ENV DOCKER_VERSION="18.09.6" \
- DOCKER_COMPOSE_VERSION="1.24.0" \
- NODE_VERSION="10.16.3" \
- POSTGRES_VERSION="11"
+ DOCKER_COMPOSE_VERSION="1.25.5" \
+ NODE_VERSION="12.16.2" \
+ POSTGRES_VERSION="12" \
+ GITVERSION_VERSION="4.0.0" \
+ CYPRESS_VERSION="4.4.0"
 
 #****************        Utilities     *********************************************
 ENV DOCKER_BUCKET="download.docker.com" \
     DOCKER_CHANNEL="stable" \
     DOCKER_SHA256="1f3f6774117765279fce64ee7f76abbb5f260264548cf80631d68fb2d795bb09" \
     DIND_COMMIT="3b5fac462d21ca164b3778647420016315289034" \
-    GITVERSION_VERSION="4.0.0" \
     DEBIAN_FRONTEND="noninteractive" \
-    SRC_DIR="/usr/src" \
-    CYPRESS_VERSION="3.6.1"
+    SRC_DIR="/usr/src"
 
 # Install git, SSH, and other utilities
 RUN set -ex \
@@ -85,7 +85,7 @@ ENV N_SRC_DIR="$SRC_DIR/n"
 
 RUN git clone https://github.com/tj/n $N_SRC_DIR \
     && cd $N_SRC_DIR && make install \
-    && n $NODE_VERSION && npm install --save-dev -g grunt && npm install --save-dev -g grunt-cli && npm install --save-dev -g webpack \
+    && n $NODE_VERSION && npm install --save-dev grunt && npm install --save-dev grunt-cli && npm install --save-dev webpack \
     && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
     && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
     && apt-get update && apt-get install -y --no-install-recommends yarn \

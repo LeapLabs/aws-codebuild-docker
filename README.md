@@ -1,6 +1,6 @@
 # AWS CodeBuild
 
-Ubuntu 18 docker image for AWS CodeBuild. Containing nodejs 10 and postgres 11.
+Ubuntu 18 docker image for AWS CodeBuild. Containing nodejs 12 and postgres 12.
 
 # Image build steps
 ```
